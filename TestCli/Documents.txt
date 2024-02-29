@@ -1,0 +1,13 @@
+Tailwind css  ❎
+https://www.nativewind.dev/quick-starts/react-native-cli
+
+navigations
+https://reactnavigation.org/docs/getting-started/
+
+https://reactnavigation.org/docs/hello-react-navigation
+
+react-native-responsive-screen
+https://www.npmjs.com/package/react-native-responsive-screen
+
+React Native Voice
+https://www.npmjs.com/package/@react-native-community/voice
