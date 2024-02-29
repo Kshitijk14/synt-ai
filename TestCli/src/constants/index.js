@@ -1,5 +1,6 @@
+import { OPEN_AI_API_KEY } from '@env';
 
-export const apiKey = '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';
+export const apiKey = OPEN_AI_API_KEY;
 
 // in some cases your api key maybe already expired
 // try to use a new account to create an api key
