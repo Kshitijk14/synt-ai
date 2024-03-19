@@ -1,8 +1,6 @@
 // Import required modules
 const Microphone = require("node-microphone");
 const fs = require("fs");
-const ffmpeg = require("fluent-ffmpeg");
-const ffmpegPath = require("ffmpeg-static");
 const readline = require("readline");
 const axios = require("axios");
 const FormData = require("form-data");
@@ -10,8 +8,6 @@ const Speaker = require("speaker");
 const OpenAI = require("openai");
 require("dotenv").config();
 
-// Set the path for FFmpeg, used for audio processing
-ffmpeg.setFfmpegPath(ffmpegPath);
 
 // Initialize OpenAI API client with the provided API key
 const secretKey = process.env.OPENAI_API_KEY;
@@ -21,7 +17,7 @@ const openai = new OpenAI({
 
 // Variables to store chat history and other components
 let chatHistory = []; // To store the conversation history
-let mic, outputFile, micStream, rl; // Microphone, output file, microphone stream, and readline interface
+let micStream, rl; // Microphone, output file, microphone stream, and readline interface
 
 console.log(
     `\n# # # # # # # # # # # # # # # # # # # # #\n# Welcome to your AI-powered voice chat #\n# # # # # # # # # # # # # # # # # # # # #\n`
@@ -33,9 +29,6 @@ console.log(
 // 3. stopRecordingAndProcess()
 // 4. transcribeAndChat()
 // 5. streamedAudio()
-
-// See diagram for overview of how they interact
-// http://www.plantuml.com/plantuml/png/fPJ1ZjCm48RlVefHJY34Fi0Uq5QbYoeMKUqMxQKNaqnJ2tTisHEWF3sUD6jvJSCY4QbLFVdcZ-Vttzn4re67erMwPHVWIyIWV2gPrdXD34r47lmzwiuQmZKnXhrkyTNh1dI41xbPyI9uZwqBdQ7-YPDYpJcViGLrc-1QZ34tk4gNWwRO1lCL4xmyQ9x8RQxN-W7r4Rl5q1cNLOkQKkFkuUqxEF-uXZKPDjgQNmXvqXtTcSX8i7S1FkB91unHaME4OFe3Wzld_lScUgjFq6m4WfLe0Blp-F3WKNzBmpPAN2wVUsj2P2YQAlsHlvvaicd5_kL60hQfeyTG8d8d8rdZasbtz1WCespF3Um7lZKMdtXfg6VAebTNLurIrZaFkGPtQQaWNTfoKLvJ6ilresSmNTNqvToPcPc_V6Hc2nkSBroGPOPaaPb9QdHXHLrfGCcB3qM-KjiKKXW3bDa2gHgAnOu-867GZ23fJND4xoZYZCgpg2QXfQFl67ARd5krY-ST5oGsSen_xP6cbw8i8OP5hmqrempQYF2e3SjnxwTNoF-VTPNr3B-S-OpMsHVlBgIVyCVb0FpZFq5Wf4x9HqdwLp_FPYoyjwRLR1ofUIyMT9BN2dpc0mRO7ZHbUsQi4Vq_nEjtsKYfyN2M7EoRvVmMCZ0h8wFTfA_XQ7y3
 
 // Function to set up the readline interface for user input
 const setupReadlineInterface = () => {
@@ -54,9 +47,9 @@ const setupReadlineInterface = () => {
   // Handle keypress events
     process.stdin.on("keypress", (str, key) => {
         if (
-        key &&
-        (key.name.toLowerCase() === "return" ||
-            key.name.toLowerCase() === "enter")
+            key &&
+            (key.name.toLowerCase() === "return" ||
+                key.name.toLowerCase() === "enter")
         ) {
             if (micStream) {
                 stopRecordingAndProcess();
@@ -64,7 +57,7 @@ const setupReadlineInterface = () => {
                 startRecording();
             }
         } else if (key && key.ctrl && key.name === "c") {
-            rocess.exit(); // Handle ctrl+c for exiting
+            process.exit(); // Handle ctrl+c for exiting
         } else if (key) {
             console.log("Exiting application...");
             process.exit(0);
@@ -80,12 +73,12 @@ const startRecording = () => {
     outputFile = fs.createWriteStream("output.wav");
     micStream = mic.startRecording();
 
-  // Write incoming data to the output file
+    // Write incoming data to the output file
     micStream.on("data", (data) => {
         outputFile.write(data);
     });
 
-  // Handle microphone errors
+    // Handle microphone errors
     micStream.on("error", (error) => {
         console.error("Error: ", error);
     });
@@ -106,52 +99,29 @@ const inputVoice = "echo"; // https://platform.openai.com/docs/guides/text-to-sp
 const inputModel = "tts-1"; // https://platform.openai.com/docs/guides/text-to-speech/audio-quality
 
 // Function to convert text to speech and play it using Speaker
-async function streamedAudio(
-    inputText,
-    model = inputModel,
-    voice = inputVoice
-) {
-    const url = "https://api.openai.com/v1/audio/speech";
-    const headers = {
-        Authorization: `Bearer ${secretKey}`, // API key for authentication
-    };
+const { exec } = require('child_process');
 
-    const data = {
-        model: model,
-        input: inputText,
-        voice: voice,
-        response_format: "mp3",
-    };
+async function streamedAudio(inputText, model = inputModel, voice = inputVoice) {
+    // Prepare SoX command to play audio directly from stdin
+    const command = `play -t mp3 -`;
 
     try {
-        // Make a POST request to the OpenAI audio API
-        const response = await axios.post(url, data, {
-            headers: headers,
-            responseType: "stream",
+        // Execute the SoX command to play the audio
+        const child = exec(command);
+
+        // Pipe the response stream to the SoX command
+        child.stdin.write(inputText);
+
+        // Handle any errors or process exit
+        child.on('error', (error) => {
+            console.error(`Error executing SoX command: ${error.message}`);
         });
 
-    // Configure speaker settings
-        const speaker = new Speaker({
-            channels: 2, // Stereo audio
-            bitDepth: 16,
-            sampleRate: 44100,
+        child.on('exit', (code, signal) => {
+            console.log(`SoX command exited with code ${code} and signal ${signal}`);
         });
-
-    // Convert the response to the desired audio format and play it
-        ffmpeg(response.data)
-        .toFormat("s16le")
-        .audioChannels(2)
-        .audioFrequency(44100)
-        .pipe(speaker);
     } catch (error) {
-        // Handle errors from the API or the audio processing
-        if (error.response) {
-            console.error(
-                `Error with HTTP request: ${error.response.status} - ${error.response.statusText}`
-            );
-        } else {
-            console.error(`Error in streamedAudio: ${error.message}`);
-        }
+        console.error(`Error in streamedAudio: ${error.message}`);
     }
 }
 

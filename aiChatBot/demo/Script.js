@@ -34,13 +34,8 @@ console.log(
 // 4. transcribeAndChat()
 // 5. streamedAudio()
 
-// Function to start the voice chat application
-const startVoiceChat = async () => {
-    await setupReadlineInterface(); // Wait for user input to select input voice
-};
-
 // Function to set up the readline interface for user input
-const setupReadlineInterface = async () => {
+const setupReadlineInterface = () => {
     rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
@@ -120,7 +115,7 @@ const stopRecordingAndProcess = () => {
 };
 
 // Default voice setting for text-to-speech
-let inputVoice = "echo"; // Default value
+// const inputVoice = ["echo", "nova"]; // https://platform.openai.com/docs/guides/text-to-speech/voice-options
 const inputModel = "tts-1"; // https://platform.openai.com/docs/guides/text-to-speech/audio-quality
 
 // Function to convert text to speech and play it using Speaker
@@ -246,5 +241,5 @@ async function transcribeAndChat() {
     }
 }
 
-// Start the voice chat application
-startVoiceChat();
+// Initialize the readline interface
+setupReadlineInterface();
