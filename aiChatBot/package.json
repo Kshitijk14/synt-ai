@@ -20,6 +20,7 @@
         "node-microphone": "^0.1.6",
         "openai": "^4.28.4",
         "readline": "^1.3.0",
+        "readline-sync": "^1.4.10",
         "speaker": "^0.5.4"
     }
 }

@@ -53,23 +53,21 @@ const setupReadlineInterface = async () => {
         process.stdin.setRawMode(true);
     }
 
-    console.log(`Select input voice (1 for echo, 2 for nova): `);
-
-    // Synchronously wait for user input
-    const answer = await waitForUserInput();
-
-    if (answer === '1') {
-        inputVoice = "echo";
-        console.log(`You selected "${inputVoice}"`);
-        startRecording();
-    } else if (answer === '2') {
-        inputVoice = "nova";
-        console.log(`You selected "${inputVoice}"`);
-        startRecording();
-    } else {
-        console.log("Invalid selection. Please enter 1 or 2.");
-        return; // Exit the function to prevent further execution
-    }
+    // rl.question(`Select input voice (1 for echo, 2 for nova): `, (answer) => {
+    //     if (answer === '1') {
+    //         inputVoice = "echo";
+    //         console.log(`You selected "${inputVoice}"`);
+    //         startRecording();
+    //     } else if (answer === '2') {
+    //         inputVoice = "nova";
+    //         console.log(`You selected "${inputVoice}"`);
+    //         startRecording();
+    //     } else {
+    //         console.log("Invalid selection. Please enter 1 or 2.");
+    //         rl.close(); // Close readline interface if selection is invalid
+    //         return; // Exit the function to prevent further execution
+    //     }
+    // });
 
     // Handle keypress events
     process.stdin.on("keypress", (str, key) => {
@@ -92,15 +90,6 @@ const setupReadlineInterface = async () => {
     });
 
     console.log("Press Enter when you're ready to start speaking.");
-};
-
-// Function to wait for user input
-const waitForUserInput = () => {
-    return new Promise((resolve) => {
-        rl.question('> ', (answer) => {
-            resolve(answer.trim());
-        });
-    });
 };
 
 // Function to start recording audio from the microphone
